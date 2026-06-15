@@ -1,15 +1,21 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
-void main() {
+import 'image_provider_helper.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
   runApp(
     ChangeNotifierProvider(
       create: (_) => AppController()..initialize(),
@@ -332,8 +338,8 @@ class AppDatabase {
 
   Future<Database> get database async {
     if (_db != null) return _db!;
-    final docs = await getApplicationDocumentsDirectory();
-    final dbPath = p.join(docs.path, 'ai_calorie_tracker.db');
+    final databasesPath = await getDatabasesPath();
+    final dbPath = p.join(databasesPath, 'ai_calorie_tracker.db');
     _db = await openDatabase(dbPath, version: 1, onCreate: _onCreate);
     return _db!;
   }
@@ -660,8 +666,12 @@ class AppController extends ChangeNotifier {
     progressEntries = await _db.getProgress(selectedProfileId!);
   }
 
-  Future<XFile?> captureMealImage() {
-    return _picker.pickImage(source: ImageSource.camera, imageQuality: 75);
+  Future<XFile?> captureMealImage() async {
+    try {
+      return await _picker.pickImage(source: ImageSource.camera, imageQuality: 75);
+    } catch (_) {
+      return _picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    }
   }
 
   Future<XFile?> pickProgressPhoto() {
@@ -1060,7 +1070,11 @@ class _FoodScannerScreenState extends State<FoodScannerScreen> {
             if (_captured != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(File(_captured!.path), height: 180, fit: BoxFit.cover),
+                child: Image(
+                  image: imageProviderFromPath(_captured!.path),
+                  height: 180,
+                  fit: BoxFit.cover,
+                ),
               ),
             if (_estimate != null) ...[
               const SizedBox(height: 12),
@@ -1499,7 +1513,12 @@ class ProgressScreen extends StatelessWidget {
                       ? null
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.file(File(e.photoPath!), width: 44, height: 44, fit: BoxFit.cover),
+                          child: Image(
+                            image: imageProviderFromPath(e.photoPath!),
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                 ),
               ),
