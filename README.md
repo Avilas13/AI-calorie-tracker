@@ -1,6 +1,6 @@
-# AI Calorie Tracker (Offline-First Flutter App)
+# AI Calorie Tracker (Offline-First Flutter Web App)
 
-A local-first nutrition + fitness mobile app built with Flutter, SQLite, and on-device flows.
+A local-first nutrition + fitness web app built with Flutter, SQLite, and on-device flows.
 
 ## Features Implemented
 
@@ -63,12 +63,12 @@ All data is stored locally on device in app documents storage.
 
 ## Run Locally
 
-1. Install Flutter SDK (3.3+).
+1. Install Flutter SDK (3.3+) and ensure web support is enabled.
 2. From repository root:
 
 ```bash
 flutter pub get
-flutter run
+flutter run -d chrome
 ```
 
 ## Notes
